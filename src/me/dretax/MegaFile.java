@@ -1,5 +1,7 @@
 package me.dretax;
 
+//https://github.com/Ale46/Mega-Java
+
 public class MegaFile {
 
     private String uid, name, h;

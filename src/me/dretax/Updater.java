@@ -14,6 +14,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import org.apache.commons.logging.Log;
+import org.json.JSONException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -36,6 +37,8 @@ public class Updater {
 	private String user;
 	private String password;
 	private static Updater cls;
+	public final String UpdaterVersion = "1.1";
+	public int MaxDownloadSpeed;
 
 	public Updater(String[] args) {
 		cls = this;
@@ -68,9 +71,10 @@ public class Updater {
 			ini.setConfig(config);
 			ini.add("Auth", "Email", "YourEmail");
 			ini.add("Auth", "Password", "YourPassword");
+			ini.add("MaxDownload", "SpeedInKB", "1024");
 			try {
 				ini.store();
-				log.info("Please edit the Config.ini");
+				log.info("Config file created. Please edit It.");
 				return;
 			} catch (IOException e) {
 				//e.printStackTrace();
@@ -81,6 +85,7 @@ public class Updater {
 			Ini ini = new Ini(this.Auth);
 			this.user = ini.get("Auth", "Email");
 			this.password = ini.get("Auth", "Password");
+			this.MaxDownloadSpeed = Integer.parseInt(ini.get("MaxDownload", "SpeedInKB"));
 		} catch (IOException e) {
 			log.error("Failed to grab the login details.");
 		}
@@ -96,20 +101,10 @@ public class Updater {
 	}
 
 	private void Parse() {
+		log.info("Updater V" + UpdaterVersion);
 		if (cmd.hasOption("h") || (cmd.hasOption("s") && cmd.hasOption("c")) || (!cmd.hasOption("s") && !cmd.hasOption("c"))) {
 			help();
 			return;
-		}
-		if (cmd.getOptionValue("d") != null) {
-			this.dir = cmd.getOptionValue("d");
-			log.info("Path: " + this.dir);
-			File dir = new File(this.dir);
-			if (!dir.exists()) {
-				dir.mkdirs();
-			}
-		}
-		if (cmd.getOptionValue("f") != null) {
-			this.foldername = cmd.getOptionValue("f");
 		}
 		URL url;
 		try {
@@ -126,6 +121,17 @@ public class Updater {
 			log.error("Failed to reach Versions inifile");
 			e.printStackTrace();
 			return;
+		}
+		if (cmd.getOptionValue("d") != null) {
+			this.dir = cmd.getOptionValue("d");
+			log.info("Path: " + this.dir);
+			File dir = new File(this.dir);
+			if (!dir.exists()) {
+				dir.mkdirs();
+			}
+		}
+		if (cmd.getOptionValue("f") != null) {
+			this.foldername = cmd.getOptionValue("f");
 		}
 		try {
 			this.latest = getValue("VersionCheck", "Latest");
@@ -181,7 +187,7 @@ public class Updater {
 			f.mkdirs();
 		}
 		try {
-			mh.download(url, s);
+			mh.download_verbose(url, s);
 		} catch (NoSuchAlgorithmException e) {
 			log.fatal("Failed to Download file ex 1.");
 		} catch (NoSuchPaddingException e) {
@@ -197,6 +203,8 @@ public class Updater {
 			log.fatal("Failed to Download file ex 6.");
 		} catch (InvalidAlgorithmParameterException e) {
 			log.fatal("Failed to Download file ex 7.");
+		} catch (JSONException e) {
+			log.fatal("Failed to Download file ex 8.");
 		}
 	}
 
@@ -204,7 +212,7 @@ public class Updater {
 		if (integer == 1) {
 			if (cmd.getOptionValue("v") != null) {
 				try {
-					log.warn("Option: " + cmd.getOptionValue("v").toUpperCase());
+					log.info("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
 					return getValue("Server", cmd.getOptionValue("v").toUpperCase());
 				} catch (IOException e) {
 					//e.printStackTrace();
@@ -213,6 +221,7 @@ public class Updater {
 				}
 			}
 			try {
+				log.info("Trying to download version: " + latest) ;
 				return getValue("Server", latest);
 			} catch (IOException e) {
 				log.error("Failed to get the latest server version.");
@@ -222,6 +231,7 @@ public class Updater {
 		} else if (integer == 2) {
 			if (cmd.getOptionValue("v") != null) {
 				try {
+					log.info("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
 					return getValue("Client", cmd.getOptionValue("v").toUpperCase());
 				} catch (IOException e) {
 					//e.printStackTrace();
@@ -230,6 +240,7 @@ public class Updater {
 				}
 			}
 			try {
+				log.info("Trying to download version: " + latest);
 				return getValue("Client", latest);
 			} catch (IOException e) {
 				log.error("Failed to get the latest client version.");
