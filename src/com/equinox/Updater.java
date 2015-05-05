@@ -233,10 +233,10 @@ public class Updater {
 				try {
 					print("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
 					if (is64bit) {
-						print("Downloading 64bit...");
+						print("Detecting 64bit OS");
 						return getValue("Client", cmd.getOptionValue("v").toUpperCase());
 					}
-					print("Downloading 32bit...");
+					print("Detecting 32bit OS");
 					return getValue("Client32", cmd.getOptionValue("v").toUpperCase());
 				} catch (IOException e) {
 					//e.printStackTrace();
@@ -247,10 +247,10 @@ public class Updater {
 			try {
 				print("Trying to download version: " + latest);
 				if (is64bit) {
-					print("Downloading 64bit...");
+					print("Detecting 64bit OS");
 					return getValue("Client", latest);
 				}
-				print("Downloading 32bit...");
+				print("Detecting 32bit OS");
 				return getValue("Client32", latest);
 			} catch (IOException e) {
 				print("Failed to get the latest client version.");
