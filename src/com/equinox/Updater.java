@@ -2,10 +2,14 @@ package com.equinox;
 
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.LogFactory;
 import org.ini4j.Config;
 import org.ini4j.Ini;
 import org.ini4j.Wini;
+import org.json.JSONException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -13,18 +17,11 @@ import java.net.URL;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import org.apache.commons.logging.Log;
-import org.json.JSONException;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 
 /**
  * Created by DreTaX on 2015.04.24
  */
 public class Updater {
-	public final Log log;
 	public String dir;
 	public String foldername = null;
 	private Options options;
@@ -38,14 +35,12 @@ public class Updater {
 	private String password;
 	private static Updater cls;
 	private boolean is64bit;
-	public final String Creator = "Created By Equinox Gaming @ www.equinoxgamers.com © 2015";
+	private final String Creator = "Created By Equinox Gaming - www.equinoxgamers.com";
 	public final String UpdaterVersion = "1.2";
 	public int MaxDownloadSpeed;
 
 	public Updater(String[] args) {
 		cls = this;
-		this.log = LogFactory.getLog(Updater.class);
-		log.info(Creator);
 		this.options = new Options();
 		this.parser = new BasicParser();
 		this.dir = System.getProperty("user.dir");
@@ -77,11 +72,11 @@ public class Updater {
 			ini.add("MaxDownload", "SpeedInKB", "1024");
 			try {
 				ini.store();
-				log.info("Config file created. Please edit It.");
+				print("Config file created. Please edit It.");
 				return;
 			} catch (IOException e) {
 				//e.printStackTrace();
-				log.info("Failed to create config.");
+				print("Failed to create config.");
 			}
 		}
 		try {
@@ -90,7 +85,7 @@ public class Updater {
 			this.password = ini.get("Auth", "Password");
 			this.MaxDownloadSpeed = Integer.parseInt(ini.get("MaxDownload", "SpeedInKB"));
 		} catch (IOException e) {
-			log.error("Failed to grab the login details.");
+			print("Failed to grab the login details.");
 		}
 
 		try {
@@ -105,7 +100,8 @@ public class Updater {
 	}
 
 	private void Parse() {
-		log.info("Updater V" + UpdaterVersion);
+		print("Updater V" + UpdaterVersion);
+		print(Creator);
 		if (cmd.hasOption("h") || (cmd.hasOption("s") && cmd.hasOption("c")) || (!cmd.hasOption("s") && !cmd.hasOption("c"))) {
 			help();
 			return;
@@ -114,7 +110,7 @@ public class Updater {
 		try {
 			url = new URL("https://dl.dropboxusercontent.com/u/136953717/Versions.ini");
 		} catch (MalformedURLException e) {
-			log.error("Failed to Grab Versions inifile");
+			print("Failed to Grab Versions inifile");
 			e.printStackTrace();
 			return;
 		}
@@ -122,13 +118,13 @@ public class Updater {
 		try {
 			FileUtils.copyURLToFile(url, this.fil);
 		} catch (IOException e) {
-			log.error("Failed to reach Versions inifile");
+			print("Failed to reach Versions inifile");
 			e.printStackTrace();
 			return;
 		}
 		if (cmd.getOptionValue("d") != null) {
 			this.dir = cmd.getOptionValue("d");
-			log.info("Path: " + this.dir);
+			print("Path: " + this.dir);
 			File dir = new File(this.dir);
 			if (!dir.exists()) {
 				dir.mkdirs();
@@ -140,21 +136,21 @@ public class Updater {
 		try {
 			this.latest = getValue("VersionCheck", "Latest");
 		} catch (IOException e) {
-			log.error("Failed to find the latest version.");
+			print("Failed to find the latest version.");
 			e.printStackTrace();
 		}
 		String link;
 		if (cmd.hasOption("s")) {
 			link = GetLink(1);
 			if (link == null) {
-				log.error("Failed to get the link.");
+				print("Failed to get the link.");
 				return;
 			}
 			DownloadFile(link);
 		} else if (cmd.hasOption("c")) {
 			link = GetLink(2);
 			if (link == null) {
-				log.error("Failed to get the link.");
+				print("Failed to get the link.");
 				return;
 			}
 			DownloadFile(link);
@@ -162,24 +158,24 @@ public class Updater {
 	}
 
 	private void DownloadFile(String link) {
-		log.info("Downloading File....");
+		print("Downloading File....");
 		Download(link);
-		log.info("Finished!");
+		print("Finished!");
+		print(Creator);
 	}
 
 	private void Download(String url) {
 		MegaHandler mh = new MegaHandler(user, password);
 		if (!user.equalsIgnoreCase("YourEmail") || !password.equalsIgnoreCase("YourPassword")) {
-			log.info("Connecting to mega with the given credentials");
+			print("Connecting to mega with the given credentials");
 			try {
 				mh.login();
 			} catch (IOException e) {
 				//e.printStackTrace();
-				log.fatal("Failed to login to mega.");
+				print("Failed to login to mega.");
 			}
-		}
-		else {
-			log.info("Connecting to mega as Anonymous");
+		} else {
+			print("Connecting to mega as Anonymous");
 		}
 		String s;
 		if (foldername == null) {
@@ -193,22 +189,22 @@ public class Updater {
 		try {
 			mh.download_verbose(url, s);
 		} catch (NoSuchAlgorithmException e) {
-			log.fatal("Failed to Download file ex 1.");
+			print("Failed to Download file ex 1.");
 		} catch (NoSuchPaddingException e) {
-			log.fatal("Failed to Download file ex 2.");
+			print("Failed to Download file ex 2.");
 		} catch (InvalidKeyException e) {
-			log.fatal("Failed to Download file ex 3.");
+			print("Failed to Download file ex 3.");
 		} catch (IOException e) {
-			log.fatal("Failed to Download file ex 4.");
+			print("Failed to Download file ex 4.");
 			e.printStackTrace();
 		} catch (IllegalBlockSizeException e) {
-			log.fatal("Failed to Download file ex 5.");
+			print("Failed to Download file ex 5.");
 		} catch (BadPaddingException e) {
-			log.fatal("Failed to Download file ex 6.");
+			print("Failed to Download file ex 6.");
 		} catch (InvalidAlgorithmParameterException e) {
-			log.fatal("Failed to Download file ex 7.");
+			print("Failed to Download file ex 7.");
 		} catch (JSONException e) {
-			log.fatal("Failed to Download file ex 8.");
+			print("Failed to Download file ex 8.");
 		}
 	}
 
@@ -216,48 +212,48 @@ public class Updater {
 		if (integer == 1) {
 			if (cmd.getOptionValue("v") != null) {
 				try {
-					log.info("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
+					print("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
 					return getValue("Server", cmd.getOptionValue("v").toUpperCase());
 				} catch (IOException e) {
 					//e.printStackTrace();
-					log.error("Couldn't find the specified server version!");
+					print("Couldn't find the specified server version!");
 					return null;
 				}
 			}
 			try {
-				log.info("Trying to download version: " + latest) ;
+				print("Trying to download version: " + latest) ;
 				return getValue("Server", latest);
 			} catch (IOException e) {
-				log.error("Failed to get the latest server version.");
+				print("Failed to get the latest server version.");
 				return null;
 				//e.printStackTrace();
 			}
 		} else if (integer == 2) {
 			if (cmd.getOptionValue("v") != null) {
 				try {
-					log.info("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
+					print("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
 					if (is64bit) {
-						log.info("Downloading 64bit...");
+						print("Downloading 64bit...");
 						return getValue("Client", cmd.getOptionValue("v").toUpperCase());
 					}
-					log.info("Downloading 32bit...");
+					print("Downloading 32bit...");
 					return getValue("Client32", cmd.getOptionValue("v").toUpperCase());
 				} catch (IOException e) {
 					//e.printStackTrace();
-					log.error("Couldn't find the specified client version!");
+					print("Couldn't find the specified client version!");
 					return null;
 				}
 			}
 			try {
-				log.info("Trying to download version: " + latest);
+				print("Trying to download version: " + latest);
 				if (is64bit) {
-					log.info("Downloading 64bit...");
+					print("Downloading 64bit...");
 					return getValue("Client", latest);
 				}
-				log.info("Downloading 32bit...");
+				print("Downloading 32bit...");
 				return getValue("Client32", latest);
 			} catch (IOException e) {
-				log.error("Failed to get the latest client version.");
+				print("Failed to get the latest client version.");
 				return null;
 				//e.printStackTrace();
 			}
@@ -268,7 +264,7 @@ public class Updater {
 	private void help() {
 		// This prints out some help
 		HelpFormatter formater = new HelpFormatter();
-		log.error("Updater for Rust Clients/Servers");
+		print("Updater for Rust Clients/Servers");
 		formater.printHelp("Updater", options);
 		System.exit(0);
 	}
@@ -286,7 +282,11 @@ public class Updater {
 			this.is64bit = (System.getProperty("os.arch").indexOf("64") != -1);
 		}
 	}
-	
+
+	public void print(Object o) {
+		System.out.println(o);
+	}
+
 	public static Updater getUpdater() {
 		return cls;
 	}

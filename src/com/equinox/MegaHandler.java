@@ -525,7 +525,7 @@ public class MegaHandler {
 		try {
 			file_url = file_data.getString("g");
 		} catch (JSONException e) {
-			Updater.getUpdater().log.info("Failed to get URL. Try again.");
+			print("Failed to get URL. Try again.");
 			e.printStackTrace();
 			return;
 		}
@@ -585,9 +585,7 @@ public class MegaHandler {
 		
 	}
 
-
-
-	public static void print(Object o) {
+	public void print(Object o) {
 		System.out.println(o);
 	}
 
