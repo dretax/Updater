@@ -1,4 +1,4 @@
-package me.dretax;
+package com.equinox;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

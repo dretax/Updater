@@ -1,4 +1,4 @@
-package me.dretax;
+package com.equinox;
 
 public class Main {
 

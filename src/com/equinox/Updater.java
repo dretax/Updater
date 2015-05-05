@@ -1,4 +1,4 @@
-package me.dretax;
+package com.equinox;
 
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
@@ -37,12 +37,15 @@ public class Updater {
 	private String user;
 	private String password;
 	private static Updater cls;
-	public final String UpdaterVersion = "1.1";
+	private boolean is64bit;
+	public final String Creator = "Created By Equinox Gaming @ www.equinoxgamers.com © 2015";
+	public final String UpdaterVersion = "1.2";
 	public int MaxDownloadSpeed;
 
 	public Updater(String[] args) {
 		cls = this;
 		this.log = LogFactory.getLog(Updater.class);
+		log.info(Creator);
 		this.options = new Options();
 		this.parser = new BasicParser();
 		this.dir = System.getProperty("user.dir");
@@ -96,6 +99,7 @@ public class Updater {
 			e.printStackTrace();
 			return;
 		}
+		GetBits();
 		Parse();
 
 	}
@@ -232,7 +236,12 @@ public class Updater {
 			if (cmd.getOptionValue("v") != null) {
 				try {
 					log.info("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
-					return getValue("Client", cmd.getOptionValue("v").toUpperCase());
+					if (is64bit) {
+						log.info("Downloading 64bit...");
+						return getValue("Client", cmd.getOptionValue("v").toUpperCase());
+					}
+					log.info("Downloading 32bit...");
+					return getValue("Client32", cmd.getOptionValue("v").toUpperCase());
 				} catch (IOException e) {
 					//e.printStackTrace();
 					log.error("Couldn't find the specified client version!");
@@ -241,7 +250,12 @@ public class Updater {
 			}
 			try {
 				log.info("Trying to download version: " + latest);
-				return getValue("Client", latest);
+				if (is64bit) {
+					log.info("Downloading 64bit...");
+					return getValue("Client", latest);
+				}
+				log.info("Downloading 32bit...");
+				return getValue("Client32", latest);
 			} catch (IOException e) {
 				log.error("Failed to get the latest client version.");
 				return null;
@@ -262,6 +276,15 @@ public class Updater {
 	private String getValue(String section, String key) throws IOException {
 		Ini rini = new Ini(this.fil);
 		return rini.get(section, key);
+	}
+
+	private void GetBits() {
+		this.is64bit = false;
+		if (System.getProperty("os.name").contains("Windows")) {
+			this.is64bit = (System.getenv("ProgramFiles(x86)") != null);
+		} else {
+			this.is64bit = (System.getProperty("os.arch").indexOf("64") != -1);
+		}
 	}
 	
 	public static Updater getUpdater() {

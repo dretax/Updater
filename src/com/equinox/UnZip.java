@@ -1,4 +1,4 @@
-package me.dretax;
+package com.equinox;
 
 /**
  * Created by DreTaX on 2015.04.25

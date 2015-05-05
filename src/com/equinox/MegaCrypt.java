@@ -1,4 +1,4 @@
-package me.dretax; 
+package com.equinox;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;

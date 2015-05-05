@@ -1,4 +1,4 @@
-package me.dretax;
+package com.equinox;
 
 //https://github.com/Ale46/Mega-Java
 
