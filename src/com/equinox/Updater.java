@@ -97,6 +97,11 @@ public class Updater {
 			return;
 		}
 		GetBits();
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() { 
+				fil.delete();
+			}
+		});
 		Parse();
 
 	}
