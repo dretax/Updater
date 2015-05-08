@@ -36,7 +36,7 @@ public class Updater {
 	private static Updater cls;
 	private boolean is64bit;
 	private final String Creator = "Created By Equinox Gaming - www.equinoxgamers.com";
-	public final String UpdaterVersion = "1.2";
+	public final String UpdaterVersion = "1.3";
 	public int MaxDownloadSpeed;
 
 	public Updater(String[] args) {
@@ -52,6 +52,7 @@ public class Updater {
 		this.options.addOption("d", "directory", true, "Specify Directory. Defaults to workdir");
 		this.options.addOption("v", "version", true, "Specify Version");
 		this.options.addOption("f", "folder", true, "Specify Extraction Folder name");
+		this.options.addOption("l", "legacy", false, "Specify this if you want the legacy version");
 		this.Auth = new File(this.dir + "/Config.ini");
 		if (!this.Auth.exists()) {
 			try {
@@ -72,12 +73,13 @@ public class Updater {
 			ini.add("MaxDownload", "SpeedInKB", "1024");
 			try {
 				ini.store();
-				print("Config file created. Please edit It.");
-				return;
 			} catch (IOException e) {
 				//e.printStackTrace();
 				print("Failed to create config.");
+				return;
 			}
+			print("Config file created. Please edit It.");
+			return;
 		}
 		try {
 			Ini ini = new Ini(this.Auth);
@@ -139,22 +141,21 @@ public class Updater {
 			print("Failed to find the latest version.");
 			e.printStackTrace();
 		}
-		String link;
+		String link = null;
 		if (cmd.hasOption("s")) {
 			link = GetLink(1);
 			if (link == null) {
 				print("Failed to get the link.");
 				return;
 			}
-			DownloadFile(link);
 		} else if (cmd.hasOption("c")) {
 			link = GetLink(2);
 			if (link == null) {
 				print("Failed to get the link.");
 				return;
 			}
-			DownloadFile(link);
 		}
+		DownloadFile(link);
 	}
 
 	private void DownloadFile(String link) {
@@ -210,6 +211,16 @@ public class Updater {
 
 	private String GetLink(int integer) {
 		if (integer == 1) {
+			if (cmd.hasOption("l")) {
+				print("Downloading Legacy Server..") ;
+				try {
+					return getValue("Legacy", "Server");
+				} catch (IOException e) {
+					print("Couldn't find the specified server version!");
+					//e.printStackTrace();
+					return null;
+				}
+			}
 			if (cmd.getOptionValue("v") != null) {
 				try {
 					print("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
@@ -229,6 +240,16 @@ public class Updater {
 				//e.printStackTrace();
 			}
 		} else if (integer == 2) {
+			if (cmd.hasOption("l")) {
+				print("Downloading Legacy Client..") ;
+				try {
+					return getValue("Legacy", "Client");
+				} catch (IOException e) {
+					print("Couldn't find the specified client version!");
+					//e.printStackTrace();
+					return null;
+				}
+			}
 			if (cmd.getOptionValue("v") != null) {
 				try {
 					print("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
