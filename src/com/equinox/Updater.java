@@ -17,6 +17,7 @@ import java.net.URL;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Scanner;
 
 /**
  * Created by DreTaX on 2015.04.24
@@ -36,8 +37,9 @@ public class Updater {
 	private static Updater cls;
 	private boolean is64bit;
 	private final String Creator = "Created By Equinox Gaming - www.equinoxgamers.com";
-	public final String UpdaterVersion = "1.3";
+	public final String UpdaterVersion = "1.4";
 	public int MaxDownloadSpeed;
+	private Scanner scanner;
 
 	public Updater(String[] args) {
 		cls = this;
@@ -47,6 +49,8 @@ public class Updater {
 		this.config = new Config();
 		this.config.setStrictOperator(true);
 		this.options.addOption("h", "help", false, "Show help.");
+		this.options.addOption("vl", "versionlist", false, "List Versions.");
+		this.options.addOption("sc", "scanner", false, "Enable User Friendly interactive mode");
 		this.options.addOption("c", "client", false, "Download Client.");
 		this.options.addOption("s", "server", false, "Download Server.");
 		this.options.addOption("d", "directory", true, "Specify Directory. Defaults to workdir");
@@ -88,6 +92,7 @@ public class Updater {
 			this.MaxDownloadSpeed = Integer.parseInt(ini.get("MaxDownload", "SpeedInKB"));
 		} catch (IOException e) {
 			print("Failed to grab the login details.");
+			return;
 		}
 
 		try {
@@ -98,8 +103,9 @@ public class Updater {
 		}
 		GetBits();
 		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() { 
-				fil.delete();
+			public void run() {
+				if (fil != null && fil.exists())
+					fil.delete();
 			}
 		});
 		Parse();
@@ -109,7 +115,7 @@ public class Updater {
 	private void Parse() {
 		print("Updater V" + UpdaterVersion);
 		print(Creator);
-		if (cmd.hasOption("h") || (cmd.hasOption("s") && cmd.hasOption("c")) || (!cmd.hasOption("s") && !cmd.hasOption("c"))) {
+		if ((cmd.hasOption("h") || (cmd.hasOption("s") && cmd.hasOption("c")) || (!cmd.hasOption("s") && !cmd.hasOption("c"))) && !cmd.hasOption("vl") && !cmd.hasOption("sc")) {
 			help();
 			return;
 		}
@@ -125,8 +131,92 @@ public class Updater {
 		try {
 			FileUtils.copyURLToFile(url, this.fil);
 		} catch (IOException e) {
-			print("Failed to reach Versions inifile");
+			print("Failed to reach Versions ini file");
 			e.printStackTrace();
+			return;
+		}
+		if (cmd.hasOption("vl")) {
+			VersionList();
+			return;
+		}
+		try {
+			this.latest = getValue("VersionCheck", "Latest");
+		} catch (IOException e) {
+			print("Failed to find the latest version.");
+			e.printStackTrace();
+		}
+		if (cmd.hasOption("sc")) {
+			this.scanner = new Scanner(System.in);
+			try {
+				print("--------------------------------------------------------------------------------");
+				print("Interactive mode detected, enabling user friendly mode.");
+				print("Please note that in this mode everything will be downloaded into the current directory.");
+				print("\n");
+				print("For example Server files will be downloaded in a folder called RustServer.");
+				print("\n");
+				print("The following inputs that you will enter are NOT case-sensitive");
+				print("--------------------------------------------------------------------------------");
+				print("** Specify Server type. Legacy or Experimental? **");
+				print("- Type TRUE for legacy");
+				print("- Type FALSE for experimental");
+				String ll = scanner.nextLine();
+				if (ll == null || (!ll.equalsIgnoreCase("false") && !ll.equalsIgnoreCase("true"))) {
+					print("You have to type TRUE or FALSE");
+					return;
+				}
+				boolean leg = Boolean.parseBoolean(ll);
+				String v = null;
+				if (!leg) {
+					print("** Specify me a rust version **");
+					print("Type LATEST for the latest files.");
+					v = scanner.nextLine();
+					if (v != null) {
+						if (v.equalsIgnoreCase("latest")) {
+							v = null;
+						}
+						else {
+							v = v.toUpperCase();
+						}
+					}
+				}
+				print("** Download client or server? Please specify: **");
+				String type = scanner.nextLine();
+				if (type.equalsIgnoreCase("client")) {
+					if (leg) {
+						this.foldername = "RustLegacyClient";
+					}
+					else {
+						this.foldername = "RustClient";
+					}
+					String link = GetLink(1, v, leg);
+					if (link == null)  {
+						print("Failed to get link. Maybe specified wrong version?");
+						print("Versions start with DB and ends with a number. Example: DB60");
+						return;
+					}
+					DownloadFile(link);
+				} else if (type.equalsIgnoreCase("server")) {
+					if (leg) {
+						this.foldername = "RustLegacyServer";
+					}
+					else {
+						this.foldername = "RustServer";
+					}
+					String link = GetLink(1, v, leg);
+					if (link == null)  {
+						print("Failed to get link. Maybe specified wrong version?");
+						print("Versions start with DB and a number. Example: DB60");
+						return;
+					}
+					DownloadFile(link);
+				} else {
+					print("You have to type SERVER or CLIENT");
+					return;
+				}
+			}
+			catch(Exception ex) {
+				print("Scanner failed. Shutting off.");
+			}
 			return;
 		}
 		if (cmd.getOptionValue("d") != null) {
@@ -140,21 +230,23 @@ public class Updater {
 		if (cmd.getOptionValue("f") != null) {
 			this.foldername = cmd.getOptionValue("f");
 		}
-		try {
-			this.latest = getValue("VersionCheck", "Latest");
-		} catch (IOException e) {
-			print("Failed to find the latest version.");
-			e.printStackTrace();
-		}
 		String link = null;
+		String ver = cmd.getOptionValue("v");
+		if (ver != null) {
+			ver = ver.toUpperCase();
+		}
+		boolean legacy = false;
+		if (cmd.hasOption("l")) {
+			legacy = true;
+		}
 		if (cmd.hasOption("s")) {
-			link = GetLink(1);
+			link = GetLink(1, ver, legacy);
 			if (link == null) {
 				print("Failed to get the link.");
 				return;
 			}
 		} else if (cmd.hasOption("c")) {
-			link = GetLink(2);
+			link = GetLink(2, ver, legacy);
 			if (link == null) {
 				print("Failed to get the link.");
 				return;
@@ -168,6 +260,26 @@ public class Updater {
 		Download(link);
 		print("Finished!");
 		print(Creator);
+	}
+	
+	private void VersionList() {
+		try {
+			Ini rini = new Ini(this.fil);
+			print("Server Versions:");
+			for (String name : rini.get("Server").keySet()) {
+				print("- " + name);
+			}
+			print("Client x64 Versions:");
+			for (String name : rini.get("Client").keySet()) {
+				print("- " + name);
+			}
+			print("Client x32 Versions:");
+			for (String name : rini.get("Client32").keySet()) {
+				print("- " + name);
+			}
+		} catch (IOException e) {
+			print("Failed to reach Versions ini file");
+		}
 	}
 
 	private void Download(String url) {
@@ -214,9 +326,9 @@ public class Updater {
 		}
 	}
 
-	private String GetLink(int integer) {
+	private String GetLink(int integer, String version, boolean legacy) {
 		if (integer == 1) {
-			if (cmd.hasOption("l")) {
+			if (legacy) {
 				print("Downloading Legacy Server..") ;
 				try {
 					return getValue("Legacy", "Server");
@@ -226,10 +338,10 @@ public class Updater {
 					return null;
 				}
 			}
-			if (cmd.getOptionValue("v") != null) {
+			if (version != null) {
 				try {
-					print("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
-					return getValue("Server", cmd.getOptionValue("v").toUpperCase());
+					print("Trying to download version: " + version);
+					return getValue("Server", version);
 				} catch (IOException e) {
 					//e.printStackTrace();
 					print("Couldn't find the specified server version!");
@@ -245,7 +357,7 @@ public class Updater {
 				//e.printStackTrace();
 			}
 		} else if (integer == 2) {
-			if (cmd.hasOption("l")) {
+			if (legacy) {
 				print("Downloading Legacy Client..") ;
 				try {
 					return getValue("Legacy", "Client");
@@ -255,15 +367,15 @@ public class Updater {
 					return null;
 				}
 			}
-			if (cmd.getOptionValue("v") != null) {
+			if (version != null) {
 				try {
-					print("Trying to download version: " + cmd.getOptionValue("v").toUpperCase());
+					print("Trying to download version: " + version);
 					if (is64bit) {
 						print("Detecting 64bit OS");
-						return getValue("Client", cmd.getOptionValue("v").toUpperCase());
+						return getValue("Client", version);
 					}
 					print("Detecting 32bit OS");
-					return getValue("Client32", cmd.getOptionValue("v").toUpperCase());
+					return getValue("Client32", version);
 				} catch (IOException e) {
 					//e.printStackTrace();
 					print("Couldn't find the specified client version!");
