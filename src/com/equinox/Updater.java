@@ -37,7 +37,7 @@ public class Updater {
 	private static Updater cls;
 	private boolean is64bit;
 	private final String Creator = "Created By Equinox Gaming - www.equinoxgamers.com";
-	public final String UpdaterVersion = "1.4";
+	public final String UpdaterVersion = "1.5";
 	public int MaxDownloadSpeed;
 	private Scanner scanner;
 
@@ -188,7 +188,7 @@ public class Updater {
 					else {
 						this.foldername = "RustClient";
 					}
-					String link = GetLink(1, v, leg);
+					String link = GetLink(2, v, leg);
 					if (link == null)  {
 						print("Failed to get link. Maybe specified wrong version?");
 						print("Versions start with DB and ends with a number. Example: DB60");
