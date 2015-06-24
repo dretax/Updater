@@ -575,13 +575,21 @@ public class MegaHandler {
 		//timer.cancel();
 		//timer.purge();
 		print("Download finished");
-		print("Unzipping file to the given directory.");
+		print("Extracting file to the given directory.");
 		String pathh = Updater.getUpdater().dir + File.separator + Updater.getUpdater().foldername;
 		if (Updater.getUpdater().dir.equalsIgnoreCase(Updater.getUpdater().foldername)) {
 			pathh = Updater.getUpdater().dir;
 		}
 		print("Directory Path: " + pathh);
-		new UnZip(f.getAbsolutePath(), pathh);
+		try {
+			new Rar(f.getAbsolutePath(), pathh, false, null).extract();
+			//new Rar(f.getAbsolutePath(), pathh, true, null).extract();
+			print("Extraction successfull");
+		} catch (Exception e) {
+			print("ERROR: " + e.getLocalizedMessage());
+			e.printStackTrace();
+		}
+		//new UnZip(f.getAbsolutePath(), pathh);
 		
 	}
 

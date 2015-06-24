@@ -37,7 +37,8 @@ public class Updater {
 	private static Updater cls;
 	private boolean is64bit;
 	private final String Creator = "Created By Equinox Gaming - www.equinoxgamers.com";
-	public final String UpdaterVersion = "1.5";
+	private String Motto = "";
+	public final String UpdaterVersion = "1.6";
 	public int MaxDownloadSpeed;
 	private Scanner scanner;
 
@@ -139,6 +140,16 @@ public class Updater {
 			VersionList();
 			return;
 		}
+		try {
+			this.Motto = getValue("Motto", "Motto");
+		} catch (IOException e) {
+			print("Failed to read Motto");
+			e.printStackTrace();
+		}
+		print("-- Week's Message --");
+		print(this.Motto);
+		print("-- Week's Message --");
+		print("\n");
 		try {
 			this.latest = getValue("VersionCheck", "Latest");
 		} catch (IOException e) {
