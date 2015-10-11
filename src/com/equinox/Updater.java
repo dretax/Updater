@@ -38,7 +38,7 @@ public class Updater {
 	private boolean is64bit;
 	private final String Creator = "Created By Equinox Gaming - www.equinoxgamers.com";
 	private String Motto = "";
-	public final String UpdaterVersion = "1.6";
+	public final String UpdaterVersion = "1.7";
 	public int MaxDownloadSpeed;
 	private Scanner scanner;
 
@@ -91,6 +91,11 @@ public class Updater {
 			this.user = ini.get("Auth", "Email");
 			this.password = ini.get("Auth", "Password");
 			this.MaxDownloadSpeed = Integer.parseInt(ini.get("MaxDownload", "SpeedInKB"));
+
+			if (this.MaxDownloadSpeed > 10240)  {
+				print("Sorry, you can't download with more than 10MBs (10240 kbs)");
+				return;
+			}
 		} catch (IOException e) {
 			print("Failed to grab the login details.");
 			return;
